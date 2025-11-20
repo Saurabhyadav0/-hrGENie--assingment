@@ -1,0 +1,59 @@
+version: '3.9'
+
+services:
+  mongo:
+    image: mongo:7.0
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_DATABASE: workradius
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - workradius
+
+  server:
+    build:
+      context: ./server
+    restart: unless-stopped
+    env_file:
+      - ./server/.env.example
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/workradius
+      - CLIENT_URL=http://localhost
+    depends_on:
+      - mongo
+    ports:
+      - '5000:5000'
+    networks:
+      - workradius
+
+  client:
+    build:
+      context: ./client
+    restart: unless-stopped
+    environment:
+      - VITE_API_URL=https://localhost/api/v1
+      - VITE_SOCKET_URL=wss://localhost
+    networks:
+      - workradius
+
+  proxy:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    depends_on:
+      - client
+      - server
+    ports:
+      - '80:80'
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - workradius
+
+volumes:
+  mongo-data:
+
+networks:
+  workradius:
+    driver: bridge
+
