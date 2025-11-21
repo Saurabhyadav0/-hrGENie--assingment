@@ -21,7 +21,7 @@ A production-ready, real-time collaborative editor with AI assistance built for 
 ├── docker-compose.yml      # Local orchestration
 ├── nginx.conf              # Reverse proxy config
 ├── ecosystem.config.js     # PM2 process definitions
-└── LEARNING.md             # Reflection and future work
+└── learning.md             # Interview-ready learning notes
 ```
 
 Key frontend modules live under `client/src/{components,hooks,services}` and backend logic is grouped into `server/{routes,services,middleware,websockets}`.
@@ -159,6 +159,12 @@ For container-based deployment on EC2, ship `docker-compose.yml` and run `docker
 | Run API in prod | `cd server && npm start` |
 | PM2 control | `pm2 start ecosystem.config.js`, `pm2 logs`, `pm2 restart all` |
 | Docker cleanup | `docker compose down -v` |
+
+---
+
+## Learning Notes
+
+Need a spoken-friendly walkthrough for interviews? Read `learning.md`. It explains every major choice (what/why/how) in simple language so you can confidently pitch the project.
 
 ---
 
