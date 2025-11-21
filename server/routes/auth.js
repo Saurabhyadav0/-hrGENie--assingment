@@ -6,12 +6,18 @@ const { authMiddleware } = require('../middleware/auth');
 
 const router = express.Router();
 const isProd = process.env.NODE_ENV === 'production';
+const envFlag = (value, fallback) => {
+  if (value === undefined) return fallback;
+  if (value === 'true') return true;
+  if (value === 'false') return false;
+  return value;
+};
 const cookieOptions = {
   httpOnly: true,
-  secure: isProd,
-  sameSite: isProd ? 'none' : 'lax',
+  secure: envFlag(process.env.COOKIE_SECURE, isProd),
+  sameSite: envFlag(process.env.COOKIE_SAMESITE, isProd ? 'none' : 'lax'),
   path: '/',
-  domain: isProd ? undefined : undefined, // Don't set domain in development to allow localhost
+  domain: process.env.COOKIE_DOMAIN || undefined,
 };
 
 router.post(
