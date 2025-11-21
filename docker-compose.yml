@@ -28,7 +28,7 @@ services:
       - workradius
 
   client:
-    image: saurabhyadav01/workradius-client:v1.0.1
+    image: saurabhyadav01/workradius-client:v1.0.2
     restart: unless-stopped
     env_file:
       - ./client/.env
