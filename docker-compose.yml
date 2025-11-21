@@ -28,7 +28,9 @@ services:
       - workradius
 
   client:
-    image: saurabhyadav01/workradius-client:v1.0.0
+    build:
+      context: ./client
+      dockerfile: dockerfile
     restart: unless-stopped
     env_file:
       - ./client/.env
