@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DocumentAPI } from '../services/api';
 import { useAuth } from '../hooks/useAuth';
@@ -9,7 +9,7 @@ import { Input } from './ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { ThemeToggle } from './theme-toggle';
-import { Trash2, Share2, FileText, Plus, MoreVertical, Clock } from 'lucide-react';
+import { Trash2, Share2, FileText, Plus, Clock, Search } from 'lucide-react';
 import logo from '../assets/logo.jpeg';
 
 const Dashboard = () => {
@@ -19,6 +19,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [title, setTitle] = useState('');
   const [error, setError] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [activeShareDoc, setActiveShareDoc] = useState(null);
 
   const fetchDocuments = async () => {
@@ -54,16 +55,40 @@ const Dashboard = () => {
     setDocuments((prev) => prev.filter((doc) => doc._id !== id));
   };
 
+  const filteredDocuments = useMemo(() => {
+    if (!searchQuery.trim()) return documents;
+    const query = searchQuery.toLowerCase();
+    return documents.filter((doc) => doc.title?.toLowerCase().includes(query));
+  }, [documents, searchQuery]);
+
   return (
     <div className="min-h-screen bg-background">
       {/* Google Docs-like Header */}
       <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="flex h-14 items-center justify-between px-4">
-          <div className="flex items-center gap-3">
+        <div className="flex h-14 items-center gap-4 px-4">
+          <div className="flex min-w-[160px] items-center gap-3">
             <img src={logo} alt="Logo" className="h-8 w-8" />
             <span className="text-lg font-medium">Docs</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="hidden flex-1 items-center gap-2 rounded-full border bg-muted/40 px-4 py-1 shadow-sm md:flex">
+            <Search className="h-4 w-4 text-muted-foreground" />
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search your documents"
+              className="h-8 border-0 bg-transparent px-0 text-sm shadow-none focus-visible:ring-0"
+            />
+          </div>
+          <div className="flex flex-1 items-center gap-2 md:flex-none">
+            <div className="flex flex-1 items-center gap-2 rounded-full border bg-muted/40 px-4 py-1 shadow-sm md:hidden">
+              <Search className="h-4 w-4 text-muted-foreground" />
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search your documents"
+                className="h-8 border-0 bg-transparent px-0 text-sm shadow-none focus-visible:ring-0"
+              />
+            </div>
             <ThemeToggle />
             <Button variant="ghost" size="sm" onClick={logout} className="h-8">
               {user?.name}
@@ -107,9 +132,19 @@ const Dashboard = () => {
             <h3 className="mb-2 text-lg font-medium">No documents yet</h3>
             <p className="text-sm text-muted-foreground">Create your first document to get started</p>
           </div>
+        ) : filteredDocuments.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted/50">
+              <Search className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <h3 className="mb-2 text-lg font-medium">No matches found</h3>
+            <p className="text-sm text-muted-foreground">
+              We couldn&apos;t find any documents matching &quot;{searchQuery.trim()}&quot;
+            </p>
+          </div>
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-            {documents.map((doc) => {
+            {filteredDocuments.map((doc) => {
               const isOwner = doc.permissionRole === 'owner';
               return (
                 <Card
