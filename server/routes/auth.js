@@ -11,6 +11,7 @@ const cookieOptions = {
   secure: isProd,
   sameSite: isProd ? 'none' : 'lax',
   path: '/',
+  domain: isProd ? undefined : undefined, // Don't set domain in development to allow localhost
 };
 
 router.post(

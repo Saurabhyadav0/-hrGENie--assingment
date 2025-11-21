@@ -4,6 +4,13 @@ import { DocumentAPI } from '../services/api';
 import { useAuth } from '../hooks/useAuth';
 import { formatDate } from '../utils/helpers';
 import ShareDialog from './ShareDialog';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
+import { Badge } from './ui/badge';
+import { ThemeToggle } from './theme-toggle';
+import { Trash2, Share2, FileText, Plus, MoreVertical, Clock } from 'lucide-react';
+import logo from '../assets/logo.jpeg';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -48,78 +55,113 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
-      <header className="flex items-center justify-between border-b border-slate-800 px-8 py-4">
-        <div>
-          <p className="text-sm text-slate-400">Welcome back</p>
-          <h1 className="text-2xl font-semibold">{user?.name}</h1>
-        </div>
-        <div className="flex items-center gap-4">
-          <span className="rounded-full bg-slate-800 px-3 py-1 text-sm">{user?.role}</span>
-          <button onClick={logout} className="rounded-lg border border-slate-700 px-4 py-2 text-sm hover:bg-slate-800">
-            Logout
-          </button>
+    <div className="min-h-screen bg-background">
+      {/* Google Docs-like Header */}
+      <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="flex h-14 items-center justify-between px-4">
+          <div className="flex items-center gap-3">
+            <img src={logo} alt="Logo" className="h-8 w-8" />
+            <span className="text-lg font-medium">Docs</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Button variant="ghost" size="sm" onClick={logout} className="h-8">
+              {user?.name}
+            </Button>
+          </div>
         </div>
       </header>
-      <main className="mx-auto max-w-5xl px-4 py-8">
-        <form onSubmit={handleCreate} className="flex flex-col gap-3 rounded-2xl border border-slate-800 bg-slate-900/60 p-6 md:flex-row">
-          <input
-            className="flex-1 rounded-xl border border-slate-800 bg-slate-950/80 px-4 py-2"
-            placeholder="New document title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-          />
-          <button className="rounded-xl bg-primary px-6 py-2 font-medium text-white">Create</button>
-        </form>
-        {error && <p className="mt-4 text-sm text-red-400">{error}</p>}
-        <section className="mt-8 space-y-4">
-          {loading ? (
-            <p className="text-sm text-slate-400">Loading documents…</p>
-          ) : documents.length === 0 ? (
-            <p className="text-sm text-slate-400">No documents yet.</p>
-          ) : (
-            documents.map((doc) => {
+
+      <main className="mx-auto max-w-6xl px-4 py-8">
+        {/* Create New Document Section */}
+        <div className="mb-8">
+          <form onSubmit={handleCreate} className="flex items-center gap-3">
+            <Button
+              type="submit"
+              size="lg"
+              className="h-12 w-12 rounded-full p-0"
+              disabled={!title.trim()}
+            >
+              <Plus className="h-5 w-5" />
+            </Button>
+            <Input
+              className="h-12 flex-1 text-base"
+              placeholder="Start a new document"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
+          </form>
+          {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
+        </div>
+
+        {/* Documents Grid - Google Docs Style */}
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <p className="text-sm text-muted-foreground">Loading documents…</p>
+          </div>
+        ) : documents.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-muted">
+              <FileText className="h-10 w-10 text-muted-foreground" />
+            </div>
+            <h3 className="mb-2 text-lg font-medium">No documents yet</h3>
+            <p className="text-sm text-muted-foreground">Create your first document to get started</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+            {documents.map((doc) => {
               const isOwner = doc.permissionRole === 'owner';
               return (
-                <div
+                <Card
                   key={doc._id}
-                  className="flex flex-col gap-4 rounded-2xl border border-slate-800 bg-slate-900/40 p-5"
+                  className="group cursor-pointer transition-all hover:shadow-lg"
+                  onClick={() => navigate(`/documents/${doc._id}`)}
                 >
-                  <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                    <div>
-                      <h3 className="text-xl font-semibold">{doc.title}</h3>
-                      <p className="text-sm text-slate-400">Updated {formatDate(doc.updatedAt)}</p>
+                  <CardContent className="p-4">
+                    <div className="mb-3 flex h-32 items-center justify-center rounded bg-muted/50">
+                      <FileText className="h-12 w-12 text-muted-foreground" />
                     </div>
-                    <div className="flex flex-wrap items-center gap-3">
-                      <span className="rounded-full border border-slate-800 px-3 py-1 text-xs uppercase text-slate-300">
+                    <h3 className="mb-1 truncate font-medium">{doc.title}</h3>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Clock className="h-3 w-3" />
+                      <span>{formatDate(doc.updatedAt)}</span>
+                    </div>
+                    <div className="mt-3 flex items-center justify-between border-t pt-3">
+                      <Badge variant="outline" className="text-xs">
                         {doc.permissionRole || 'viewer'}
-                      </span>
-                      <button
-                        onClick={() => navigate(`/documents/${doc._id}`)}
-                        className="rounded-lg bg-primary/90 px-4 py-2 text-sm font-medium hover:bg-primary"
-                      >
-                        Open
-                      </button>
-                      <button
-                        onClick={() => isOwner && setActiveShareDoc(doc)}
-                        disabled={!isOwner}
-                        className="rounded-lg border border-slate-700 px-4 py-2 text-sm hover:bg-slate-800 disabled:cursor-not-allowed disabled:border-slate-800 disabled:text-slate-500"
-                      >
-                        Share
-                      </button>
-                      <button
-                        onClick={() => handleDelete(doc._id)}
-                        className="rounded-lg border border-red-500/40 px-4 py-2 text-sm text-red-300 hover:bg-red-500/10"
-                      >
-                        Delete
-                      </button>
+                      </Badge>
+                      <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            isOwner && setActiveShareDoc(doc);
+                          }}
+                          disabled={!isOwner}
+                        >
+                          <Share2 className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-destructive hover:text-destructive"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(doc._id);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                </div>
+                  </CardContent>
+                </Card>
               );
-            })
-          )}
-        </section>
+            })}
+          </div>
+        )}
       </main>
       <ShareDialog
         documentId={activeShareDoc?._id}

@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
-const apiProxy = process.env.VITE_API_PROXY || 'http://localhost:5001';
+const apiProxy = process.env.VITE_API_PROXY || 'http://localhost:5000';
 
 export default defineConfig({
   plugins: [react()],

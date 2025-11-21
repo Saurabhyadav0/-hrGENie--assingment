@@ -1,6 +1,11 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
+import logo from '../assets/logo.jpeg';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -28,50 +33,55 @@ const Login = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-950 px-4">
-      <div className="w-full max-w-md rounded-2xl bg-slate-900/70 p-8 shadow-xl">
-        <h1 className="text-3xl font-semibold">Welcome back</h1>
-        <p className="text-sm text-slate-400">Sign in to continue collaborating</p>
-        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-          <div>
-            <label className="text-sm text-slate-300">Email</label>
-            <input
-              className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800/80 px-3 py-2 text-slate-100 focus:border-primary focus:outline-none"
-              name="email"
-              type="email"
-              autoComplete="email"
-              required
-              value={form.email}
-              onChange={handleChange}
-            />
+    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+      <Card className="w-full max-w-md">
+        <CardHeader className="space-y-1 text-center">
+          <div className="flex justify-center mb-4">
+            <img src={logo} alt="Logo" className="h-16 w-16" />
           </div>
-          <div>
-            <label className="text-sm text-slate-300">Password</label>
-            <input
-              className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800/80 px-3 py-2 text-slate-100 focus:border-primary focus:outline-none"
-              name="password"
-              type="password"
-              required
-              value={form.password}
-              onChange={handleChange}
-            />
-          </div>
-          {error && <p className="text-sm text-red-400">{error}</p>}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-xl bg-primary px-4 py-2 font-medium text-white transition hover:bg-primary/80 disabled:cursor-not-allowed disabled:opacity-70"
-          >
-            {loading ? 'Signing in…' : 'Login'}
-          </button>
-        </form>
-        <p className="mt-4 text-center text-sm text-slate-400">
-          No account?{' '}
-          <Link to="/register" className="text-primary underline">
-            Create one
-          </Link>
-        </p>
-      </div>
+          <CardTitle className="text-3xl">Welcome back</CardTitle>
+          <CardDescription>Sign in to continue collaborating</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                required
+                value={form.email}
+                onChange={handleChange}
+                placeholder="name@example.com"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                name="password"
+                type="password"
+                required
+                value={form.password}
+                onChange={handleChange}
+                placeholder="Enter your password"
+              />
+            </div>
+            {error && <p className="text-sm text-destructive">{error}</p>}
+            <Button type="submit" disabled={loading} className="w-full">
+              {loading ? 'Signing in…' : 'Login'}
+            </Button>
+          </form>
+          <p className="mt-4 text-center text-sm text-muted-foreground">
+            No account?{' '}
+            <Link to="/register" className="text-primary underline hover:text-primary/80">
+              Create one
+            </Link>
+          </p>
+        </CardContent>
+      </Card>
     </div>
   );
 };

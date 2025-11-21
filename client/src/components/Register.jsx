@@ -1,6 +1,12 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import logo from '../assets/logo.jpeg';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -30,73 +36,83 @@ const Register = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-950 px-4">
-      <div className="w-full max-w-md rounded-2xl bg-slate-900/70 p-8 shadow-xl">
-        <h1 className="text-3xl font-semibold">Create an account</h1>
-        <p className="text-sm text-slate-400">Join WorkRadius to collaborate in real-time</p>
-        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-          <div>
-            <label className="text-sm text-slate-300">Name</label>
-            <input
-              className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800/80 px-3 py-2 text-slate-100 focus:border-primary focus:outline-none"
-              name="name"
-              required
-              value={form.name}
-              onChange={handleChange}
-            />
+    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+      <Card className="w-full max-w-md">
+        <CardHeader className="space-y-1 text-center">
+          <div className="flex justify-center mb-4">
+            <img src={logo} alt="Logo" className="h-16 w-16" />
           </div>
-          <div>
-            <label className="text-sm text-slate-300">Email</label>
-            <input
-              className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800/80 px-3 py-2 text-slate-100 focus:border-primary focus:outline-none"
-              name="email"
-              type="email"
-              required
-              value={form.email}
-              onChange={handleChange}
-            />
-          </div>
-          <div>
-            <label className="text-sm text-slate-300">Password</label>
-            <input
-              className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800/80 px-3 py-2 text-slate-100 focus:border-primary focus:outline-none"
-              name="password"
-              type="password"
-              required
-              value={form.password}
-              onChange={handleChange}
-            />
-          </div>
-          <div>
-            <label className="text-sm text-slate-300">Role</label>
-            <select
-              name="role"
-              value={form.role}
-              onChange={handleChange}
-              className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800/80 px-3 py-2 text-slate-100 focus:border-primary focus:outline-none"
-            >
-              <option value="owner">Owner</option>
-              <option value="editor">Editor</option>
-              <option value="viewer">Viewer</option>
-            </select>
-          </div>
-          {error && <p className="text-sm text-red-400">{error}</p>}
-          {success && <p className="text-sm text-emerald-400">{success}</p>}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-xl bg-primary px-4 py-2 font-medium text-white transition hover:bg-primary/80 disabled:cursor-not-allowed disabled:opacity-70"
-          >
-            {loading ? 'Creating account…' : 'Register'}
-          </button>
-        </form>
-        <p className="mt-4 text-center text-sm text-slate-400">
-          Already registered?{' '}
-          <Link to="/login" className="text-primary underline">
-            Log in
-          </Link>
-        </p>
-      </div>
+          <CardTitle className="text-3xl">Create an account</CardTitle>
+          <CardDescription>Join WorkRadius to collaborate in real-time</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Name</Label>
+              <Input
+                id="name"
+                name="name"
+                required
+                value={form.name}
+                onChange={handleChange}
+                placeholder="Your name"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                required
+                value={form.email}
+                onChange={handleChange}
+                placeholder="name@example.com"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                name="password"
+                type="password"
+                required
+                value={form.password}
+                onChange={handleChange}
+                placeholder="Enter your password"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="role">Role</Label>
+              <Select
+                name="role"
+                value={form.role}
+                onValueChange={(value) => setForm((prev) => ({ ...prev, role: value }))}
+              >
+                <SelectTrigger id="role">
+                  <SelectValue placeholder="Select a role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="owner">Owner</SelectItem>
+                  <SelectItem value="editor">Editor</SelectItem>
+                  <SelectItem value="viewer">Viewer</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {error && <p className="text-sm text-destructive">{error}</p>}
+            {success && <p className="text-sm text-emerald-500">{success}</p>}
+            <Button type="submit" disabled={loading} className="w-full">
+              {loading ? 'Creating account…' : 'Register'}
+            </Button>
+          </form>
+          <p className="mt-4 text-center text-sm text-muted-foreground">
+            Already registered?{' '}
+            <Link to="/login" className="text-primary underline hover:text-primary/80">
+              Log in
+            </Link>
+          </p>
+        </CardContent>
+      </Card>
     </div>
   );
 };

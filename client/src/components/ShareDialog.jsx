@@ -1,5 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { DocumentAPI } from '../services/api';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Badge } from './ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
+import { Copy, X, UserMinus } from 'lucide-react';
 
 const initialForm = { email: '', role: 'viewer' };
 
@@ -99,106 +107,116 @@ const ShareDialog = ({ documentId, title, isOpen, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
-      <div className="w-full max-w-xl rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <p className="text-xs uppercase tracking-wide text-slate-500">Share document</p>
-            <h3 className="text-xl font-semibold text-white">{title}</h3>
-          </div>
-          <button onClick={onClose} className="rounded-full p-1 text-slate-400 hover:bg-slate-800 hover:text-white">
-            ✕
-          </button>
-        </div>
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-xl">
+        <DialogHeader>
+          <DialogTitle>Share document</DialogTitle>
+          <DialogDescription>{title}</DialogDescription>
+        </DialogHeader>
 
-        <div className="mt-5 space-y-4">
-          <div>
-            <p className="text-xs uppercase text-slate-500">Link</p>
-            <div className="mt-2 flex flex-col gap-3 rounded-xl border border-slate-800 bg-slate-950/60 p-3 md:flex-row md:items-center">
-              <span className="flex-1 truncate text-sm text-slate-200">{documentLink}</span>
-              <button
-                onClick={handleCopyLink}
-                className="rounded-lg border border-slate-700 px-4 py-2 text-sm text-white hover:bg-slate-800"
-              >
-                Copy link
-              </button>
-            </div>
-          </div>
-
-          <form onSubmit={handleInvite} className="rounded-xl border border-slate-800 bg-slate-950/60 p-4">
-            <p className="text-sm font-medium text-white">Invite people</p>
-            <div className="mt-3 flex flex-col gap-3 md:flex-row">
-              <input
-                type="email"
-                placeholder="name@example.com"
-                value={form.email}
-                onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
-                className="flex-1 rounded-lg border border-slate-800 bg-slate-900/80 px-3 py-2 text-sm text-white"
-                required
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label>Link</Label>
+            <div className="flex flex-col gap-3 md:flex-row md:items-center">
+              <Input
+                value={documentLink}
+                readOnly
+                className="flex-1"
               />
-              <select
-                value={form.role}
-                onChange={(e) => setForm((prev) => ({ ...prev, role: e.target.value }))}
-                className="rounded-lg border border-slate-800 bg-slate-900/80 px-3 py-2 text-sm"
-              >
-                <option value="editor">Editor</option>
-                <option value="viewer">Viewer</option>
-              </select>
-              <button
-                type="submit"
-                disabled={submitting}
-                className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
-              >
-                {submitting ? 'Sending…' : 'Send'}
-              </button>
+              <Button onClick={handleCopyLink} variant="outline" size="sm">
+                <Copy className="mr-2 h-4 w-4" />
+                Copy
+              </Button>
             </div>
-          </form>
-
-          <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-4">
-            <p className="text-sm font-medium text-white">People with access</p>
-            {loading ? (
-              <p className="mt-3 text-sm text-slate-400">Loading collaborators…</p>
-            ) : collaborators.length === 0 ? (
-              <p className="mt-3 text-sm text-slate-400">Only you have access right now.</p>
-            ) : (
-              <ul className="mt-3 space-y-3">
-                {collaborators.map((collab) => (
-                  <li key={collab.user?._id || collab.id} className="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                      <p className="font-medium text-white">{collab.user?.name || 'Unknown user'}</p>
-                      <p className="text-sm text-slate-400">{collab.user?.email || 'Deleted account'}</p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="rounded-full border border-slate-700 px-3 py-1 text-xs uppercase text-slate-300">
-                        {collab.role}
-                      </span>
-                      {collab.role !== 'owner' && collab.user?._id && (
-                        <button
-                          onClick={() => handleRevoke(collab.user._id)}
-                          className="text-xs text-red-400 hover:text-red-200"
-                        >
-                          Remove
-                        </button>
-                      )}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
           </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Invite people</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleInvite} className="space-y-3">
+                <div className="flex flex-col gap-3 md:flex-row">
+                  <Input
+                    type="email"
+                    placeholder="name@example.com"
+                    value={form.email}
+                    onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
+                    className="flex-1"
+                    required
+                  />
+                  <Select
+                    value={form.role}
+                    onValueChange={(value) => setForm((prev) => ({ ...prev, role: value }))}
+                  >
+                    <SelectTrigger className="w-full md:w-[140px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="editor">Editor</SelectItem>
+                      <SelectItem value="viewer">Viewer</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button type="submit" disabled={submitting}>
+                    {submitting ? 'Sending…' : 'Send'}
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>People with access</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <p className="text-sm text-muted-foreground">Loading collaborators…</p>
+              ) : collaborators.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Only you have access right now.</p>
+              ) : (
+                <ul className="space-y-3">
+                  {collaborators.map((collab) => (
+                    <li key={collab.user?._id || collab.id} className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <p className="font-medium">{collab.user?.name || 'Unknown user'}</p>
+                        <p className="text-sm text-muted-foreground">{collab.user?.email || 'Deleted account'}</p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Badge variant="outline" className="uppercase">
+                          {collab.role}
+                        </Badge>
+                        {collab.role !== 'owner' && collab.user?._id && (
+                          <Button
+                            onClick={() => handleRevoke(collab.user._id)}
+                            variant="ghost"
+                            size="sm"
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <UserMinus className="mr-2 h-4 w-4" />
+                            Remove
+                          </Button>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </CardContent>
+          </Card>
 
           {feedback && (
             <p
               className={`text-sm ${
-                feedback.type === 'error' ? 'text-red-400' : 'text-emerald-400'
+                feedback.type === 'error' ? 'text-destructive' : 'text-emerald-500'
               }`}
             >
               {feedback.message}
             </p>
           )}
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 

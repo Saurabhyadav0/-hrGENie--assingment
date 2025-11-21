@@ -72,10 +72,47 @@ const server = http.createServer(app);
 // WebSockets
 const io = new Server(server, {
   cors: {
-    origin: CLIENT_ORIGINS,
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) {
+        logger.info('✅ Socket.IO connection from no origin (allowed)');
+        return callback(null, true);
+      }
+      
+      // Explicitly allow http://localhost:5173
+      const allowedOrigins = [
+        'http://localhost:5173',
+        'http://127.0.0.1:5173',
+        ...CLIENT_ORIGINS
+      ];
+      
+      if (allowedOrigins.includes(origin)) {
+        logger.info(`✅ Socket.IO CORS allowed for origin: ${origin}`);
+        callback(null, true);
+      } else {
+        logger.warn(`❌ Blocked Socket.IO CORS origin: ${origin}`);
+        logger.warn(`   Allowed origins: ${allowedOrigins.join(', ')}`);
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   },
+  transports: ['websocket', 'polling'],
+  allowEIO3: true,
+  pingTimeout: 60000,
+  pingInterval: 25000,
 });
+
+// Log socket connections
+io.on('connection', (socket) => {
+  logger.info(`🔌 Socket.IO client connected: ${socket.id}`);
+  socket.on('disconnect', () => {
+    logger.info(`🔌 Socket.IO client disconnected: ${socket.id}`);
+  });
+});
+
 initEditorSocket(io);
 
 // ----------------------
