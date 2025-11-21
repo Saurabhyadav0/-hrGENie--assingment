@@ -12,14 +12,13 @@ services:
       - workradius
 
   server:
-    build:
-      context: ./server
+    image: saurabhyadav01/workradius-server:v1.0.0
     restart: unless-stopped
     env_file:
-      - ./server/.env.example
+      - ./server/.env
     environment:
-      - MONGO_URI=mongodb://mongo:27017/workradius
-      - CLIENT_URL=http://localhost
+      - MONGO_URI=mongodb+srv://saurabhyadavairth_db_user:ACgPu01XX5A4bKwW@assingment.n3vmx4p.mongodb.net/?appName=Assingment
+      - CLIENT_URL=13.200.39.165
     depends_on:
       - mongo
     ports:
@@ -28,12 +27,13 @@ services:
       - workradius
 
   client:
-    build:
-      context: ./client
+    image: saurabhyadav01/workradius-client:v1.0.0
     restart: unless-stopped
+    env_file:
+      - ./client/.env
     environment:
-      - VITE_API_URL=https://localhost/api/v1
-      - VITE_SOCKET_URL=wss://localhost
+      - VITE_API_URL=https://13.200.39.165/api/v1
+      - VITE_SOCKET_URL=wss://13.200.39.165
     networks:
       - workradius
 
