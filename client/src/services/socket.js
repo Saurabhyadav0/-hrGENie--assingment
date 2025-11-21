@@ -17,7 +17,7 @@ const getSocketURL = () => {
     return url.origin;
   } catch (e) {
     // Fallback: try to extract manually
-    const match = apiBaseURL.match(/^(http?:\/\/[^\/]+)/);
+    const match = apiBaseURL.match(/^(https?:\/\/[^\/]+)/);
     if (match) {
       return match[1];
     }
