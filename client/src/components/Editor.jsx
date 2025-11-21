@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
-import Quill, { Delta } from 'quill';
+import Quill from 'quill';
 import QuillCursors from 'quill-cursors';
 import { useAuth } from '../hooks/useAuth';
 import { useEditor } from '../hooks/useEditor';
@@ -16,8 +16,10 @@ import { ArrowLeft, Share2, Users, Wifi, WifiOff, Menu } from 'lucide-react';
 import logo from '../assets/logo.jpeg';
 
 let cursorsRegistered = false;
+let Delta;
 if (typeof window !== 'undefined' && !cursorsRegistered) {
   Quill.register('modules/cursors', QuillCursors);
+  Delta = Quill.import('delta');
   cursorsRegistered = true;
 }
 
@@ -31,6 +33,7 @@ const Editor = () => {
   const isApplyingRemoteChangeRef = useRef(false);
   const lastContentRef = useRef('');
   const editorInitializedRef = useRef(false);
+  const lastChangeTimeRef = useRef(0);
   const [selectionText, setSelectionText] = useState('');
   const [shareOpen, setShareOpen] = useState(false);
   const [editorKey, setEditorKey] = useState(0);
@@ -181,11 +184,12 @@ const Editor = () => {
   useEffect(() => {
     const socket = socketRef.current;
     if (!socket) {
-      console.log('[Editor] Socket not available yet');
+      console.log('[Editor] Socket not available yet (isConnected =', isConnected, ')');
       return;
     }
 
-    const handler = ({ delta, userId: remoteUserId }) => {
+    // Define handler as named function for proper cleanup
+    function handleTextChange({ delta, userId: remoteUserId }) {
       // Don't apply our own changes (they're already in the editor)
       if (String(remoteUserId) === String(userId)) {
         console.log('[Editor] Ignoring own change from:', remoteUserId);
@@ -206,6 +210,9 @@ const Editor = () => {
       try {
         // Create a proper Delta object from the received delta
         let quillDelta;
+        if (!Delta) {
+          Delta = Quill.import('delta');
+        }
         if (delta?.ops && Array.isArray(delta.ops)) {
           quillDelta = new Delta(delta.ops);
         } else if (Array.isArray(delta)) {
@@ -225,9 +232,12 @@ const Editor = () => {
         // Apply the delta update using 'api' source to prevent triggering our own handlers
         editor.updateContents(quillDelta, 'api');
         
-        // Update content state (for both editors and viewers)
+        // Update content state (for both editors and viewers) - use functional update
         const newContent = editor.root.innerHTML;
-        setEditorValue(newContent);
+        setEditorValue((prevValue) => {
+          // Only update if content actually changed to avoid unnecessary re-renders
+          return newContent !== prevValue ? newContent : prevValue;
+        });
         updateContent(newContent);
         
         console.log('[Editor] Successfully applied remote change from:', remoteUserId);
@@ -239,20 +249,25 @@ const Editor = () => {
           isApplyingRemoteChangeRef.current = false;
         }, 150);
       }
-    };
+    }
 
-    console.log('[Editor] Setting up text-change handler for user:', userId, 'isViewer:', isViewer, 'socket connected:', socket.connected);
-    socket.on('text-change', handler);
+    console.log(
+      '[Editor] Setting up text-change handler for user:',
+      userId,
+      'isViewer:',
+      isViewer,
+      'socket connected:',
+      socket.connected
+    );
+    socket.on('text-change', handleTextChange);
     
     return () => {
       console.log('[Editor] Removing text-change handler');
-      socket.off('text-change', handler);
+      // Remove the specific handler function
+      socket.off('text-change', handleTextChange);
     };
   }, [isConnected, userId, isViewer, updateContent]);
 
-  // Track if we've handled this change via text-change event
-  const lastChangeTimeRef = useRef(0);
-  
   // Handle ReactQuill onChange (fallback if text-change doesn't fire)
   const handleChange = useCallback(
     (content, delta, source) => {

@@ -43,57 +43,137 @@ export const useEditor = (documentId, user) => {
 
     console.log('[Socket] Creating connection for document:', documentId, 'user:', normalizedUserId);
     const socket = createEditorSocket(documentId, user);
+    if (!socket) {
+      console.error('[Socket] Failed to create socket');
+      return;
+    }
+    
     socketRef.current = socket;
 
-    socket.on('connect', () => {
+    // Define all event handlers as named functions for proper cleanup
+    function onConnect() {
       console.log('[Socket] Connected successfully, socket ID:', socket.id);
       setIsConnected(true);
-    });
+    }
 
-    socket.on('connect_error', (error) => {
+    function onConnectError(error) {
       console.error('[Socket] Connection error:', error);
       setIsConnected(false);
-    });
+    }
 
-    socket.on('disconnect', (reason) => {
+    function onDisconnect(reason) {
       console.log('[Socket] Disconnected:', reason);
       setIsConnected(false);
-    });
+    }
 
-    socket.on('presence', (users) => {
+    function onPresence(users) {
       console.log('[Socket] Presence update:', users);
-      setParticipants(users);
-    });
+      setParticipants((prev) => {
+        // Use functional update to ensure we always get the latest state
+        // Check if the update is actually different to avoid unnecessary re-renders
+        const userMap = new Map(prev.map(u => [u.userId, u]));
+        let hasChanges = false;
+        
+        users.forEach(user => {
+          const existing = userMap.get(user.userId);
+          if (!existing || JSON.stringify(existing) !== JSON.stringify(user)) {
+            hasChanges = true;
+            userMap.set(user.userId, user);
+          }
+        });
+        
+        // Remove users that are no longer present
+        prev.forEach(user => {
+          if (!users.find(u => u.userId === user.userId)) {
+            hasChanges = true;
+            userMap.delete(user.userId);
+          }
+        });
+        
+        return hasChanges ? Array.from(userMap.values()) : prev;
+      });
+    }
 
-    socket.on('user-joined', (payload) => {
+    function onUserJoined(payload) {
       console.log('[Socket] User joined:', payload);
-      setParticipants((prev) => [...prev.filter((u) => u.userId !== payload.userId), payload]);
-    });
+      setParticipants((prev) => {
+        const exists = prev.find(u => u.userId === payload.userId);
+        if (exists && JSON.stringify(exists) === JSON.stringify(payload)) {
+          return prev; // No change needed
+        }
+        return [...prev.filter((u) => u.userId !== payload.userId), payload];
+      });
+    }
 
-    socket.on('user-left', (payload) => {
+    function onUserLeft(payload) {
       console.log('[Socket] User left:', payload);
       setParticipants((prev) => prev.filter((u) => u.userId !== payload?.userId));
-    });
+    }
 
-    socket.on('document-saved', () => setStatus('saved'));
-    socket.on('document-save-error', () => setStatus('error'));
+    function onDocumentSaved() {
+      setStatus((prevStatus) => prevStatus !== 'saved' ? 'saved' : prevStatus);
+    }
 
-    socket.on('cursor-move', ({ userId, cursor }) => {
+    function onDocumentSaveError() {
+      setStatus('error');
+    }
+
+    function onCursorMove({ userId, cursor }) {
       console.log('[Socket] Cursor move:', userId, cursor);
-      setParticipants((prev) => prev.map((participant) => (participant.userId === userId ? { ...participant, cursor } : participant)));
-    });
+      setParticipants((prev) => 
+        prev.map((participant) => 
+          participant.userId === userId 
+            ? { ...participant, cursor } 
+            : participant
+        )
+      );
+    }
 
-    socket.on('permission-denied', (data) => {
+    function onPermissionDenied(data) {
       console.warn('[Socket] Permission denied:', data);
-    });
+    }
 
-    // Add text-change listener here too for debugging
-    socket.on('text-change', (payload) => {
+    function onTextChange(payload) {
       console.log('[useEditor] Received text-change event (forwarding to Editor):', payload);
-    });
+      // This event is handled in Editor component, but we log it here for debugging
+    }
 
+    // Register all event listeners
+    socket.on('connect', onConnect);
+    socket.on('connect_error', onConnectError);
+    socket.on('disconnect', onDisconnect);
+    socket.on('presence', onPresence);
+    socket.on('user-joined', onUserJoined);
+    socket.on('user-left', onUserLeft);
+    socket.on('document-saved', onDocumentSaved);
+    socket.on('document-save-error', onDocumentSaveError);
+    socket.on('cursor-move', onCursorMove);
+    socket.on('permission-denied', onPermissionDenied);
+    socket.on('text-change', onTextChange);
+
+    // Ensure socket connects if it hasn't already
+    if (!socket.connected) {
+      socket.connect();
+    }
+
+    // Cleanup: Remove all event listeners and disconnect
     return () => {
       console.log('[Socket] Cleaning up connection');
+      
+      // Remove all event listeners using the named functions
+      socket.off('connect', onConnect);
+      socket.off('connect_error', onConnectError);
+      socket.off('disconnect', onDisconnect);
+      socket.off('presence', onPresence);
+      socket.off('user-joined', onUserJoined);
+      socket.off('user-left', onUserLeft);
+      socket.off('document-saved', onDocumentSaved);
+      socket.off('document-save-error', onDocumentSaveError);
+      socket.off('cursor-move', onCursorMove);
+      socket.off('permission-denied', onPermissionDenied);
+      socket.off('text-change', onTextChange);
+      
+      // Disconnect the socket
       socket.disconnect();
       socketRef.current = null;
     };
