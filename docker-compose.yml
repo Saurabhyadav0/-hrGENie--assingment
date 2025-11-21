@@ -19,10 +19,11 @@ services:
     environment:
       - MONGO_URI=mongodb+srv://saurabhyadavairth_db_user:ACgPu01XX5A4bKwW@assingment.n3vmx4p.mongodb.net/?appName=Assingment
       - CLIENT_URL=13.200.39.165
+      - PORT=5001
     depends_on:
       - mongo
     ports:
-      - '5000:5001'
+      - '5001:5001'
     networks:
       - workradius
 
