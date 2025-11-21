@@ -189,60 +189,35 @@ const Editor = () => {
     }
 
     // Define handler as named function for proper cleanup
-    function handleTextChange({ delta, userId: remoteUserId }) {
+    // We now trust the full HTML `content` sent by the server so that
+    // remote users see exactly the same document, instead of trying
+    // to reconcile Quill deltas on different local states.
+    function handleTextChange({ delta, content, userId: remoteUserId }) {
       // Don't apply our own changes (they're already in the editor)
       if (String(remoteUserId) === String(userId)) {
         console.log('[Editor] Ignoring own change from:', remoteUserId);
         return;
       }
 
-      const editor = quillRef.current?.getEditor();
-      if (!editor) {
-        console.warn('[Editor] Editor not available for remote change');
+      console.log('[Editor] Applying remote change from:', remoteUserId, 'delta:', delta, 'content length:', content?.length);
+
+      // If we didn't receive content for some reason, do nothing
+      if (typeof content !== 'string') {
+        console.warn('[Editor] No content provided in text-change payload, skipping apply');
         return;
       }
-
-      console.log('[Editor] Applying remote change from:', remoteUserId, 'delta:', delta);
 
       // Mark that we're applying a remote change
       isApplyingRemoteChangeRef.current = true;
 
       try {
-        // Create a proper Delta object from the received delta
-        let quillDelta;
-        if (!Delta) {
-          Delta = Quill.import('delta');
-        }
-        if (delta?.ops && Array.isArray(delta.ops)) {
-          quillDelta = new Delta(delta.ops);
-        } else if (Array.isArray(delta)) {
-          quillDelta = new Delta(delta);
-        } else if (delta && typeof delta === 'object' && delta.ops) {
-          quillDelta = new Delta(delta.ops);
-        } else {
-          console.warn('[Editor] Invalid delta format, attempting to use as-is:', delta);
-          if (delta && typeof delta === 'object') {
-            quillDelta = new Delta(delta);
-          } else {
-            console.error('[Editor] Cannot create Delta from:', delta);
-            return;
-          }
-        }
-
-        // Apply the delta update using 'api' source to prevent triggering our own handlers
-        editor.updateContents(quillDelta, 'api');
-        
-        // Update content state (for both editors and viewers) - use functional update
-        const newContent = editor.root.innerHTML;
-        setEditorValue((prevValue) => {
-          // Only update if content actually changed to avoid unnecessary re-renders
-          return newContent !== prevValue ? newContent : prevValue;
-        });
-        updateContent(newContent);
+        // Update ReactQuill's controlled value and our document state
+        setEditorValue(prevValue => (content !== prevValue ? content : prevValue));
+        updateContent(content);
         
         console.log('[Editor] Successfully applied remote change from:', remoteUserId);
       } catch (error) {
-        console.error('[Editor] Error applying remote change:', error, 'delta:', delta);
+        console.error('[Editor] Error applying remote change:', error, 'delta:', delta, 'content length:', content?.length);
       } finally {
         // Reset flag after a brief delay to allow Quill to process
         setTimeout(() => {

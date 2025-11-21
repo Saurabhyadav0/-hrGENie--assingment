@@ -132,7 +132,8 @@ const initEditorSocket = (io) => {
       const recipientCount = io.sockets.adapter.rooms.get(normalizedDocumentId)?.size || 0;
       console.log(`[Socket] Broadcasting text-change to ${recipientCount} users in document ${normalizedDocumentId}`);
       
-      socket.to(normalizedDocumentId).emit('text-change', { delta, userId: normalizedUserId });
+      // Send both the delta and the full HTML content so clients can render
+      socket.to(normalizedDocumentId).emit('text-change', { delta, content, userId: normalizedUserId });
       
       if (content === null || content === undefined) return;
       
